@@ -1,0 +1,66 @@
+package com.impactosocial.voto.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class Candidato {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // Identificação
+    private String nomeUrna;
+    private Integer numero;
+    private String cargo;
+    private String estadoUf;
+
+    // Regras Eleitorais
+    private String partido;
+    private String federacao;
+    private String situacao;
+
+    // Construtor Vazio (Obrigatório para o Spring/Hibernate)
+    public Candidato() {
+    }
+
+    // Construtor Completo (Vai nos ajudar na hora de criar os scripts de importação)
+    public Candidato(String nomeUrna, Integer numero, String cargo, String estadoUf, String partido, String federacao, String situacao) {
+        this.nomeUrna = nomeUrna;
+        this.numero = numero;
+        this.cargo = cargo;
+        this.estadoUf = estadoUf;
+        this.partido = partido;
+        this.federacao = federacao;
+        this.situacao = situacao;
+    }
+
+    // --- Getters e Setters ---
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getNomeUrna() { return nomeUrna; }
+    public void setNomeUrna(String nomeUrna) { this.nomeUrna = nomeUrna; }
+
+    public Integer getNumero() { return numero; }
+    public void setNumero(Integer numero) { this.numero = numero; }
+
+    public String getCargo() { return cargo; }
+    public void setCargo(String cargo) { this.cargo = cargo; }
+
+    public String getEstadoUf() { return estadoUf; }
+    public void setEstadoUf(String estadoUf) { this.estadoUf = estadoUf; }
+
+    public String getPartido() { return partido; }
+    public void setPartido(String partido) { this.partido = partido; }
+
+    public String getFederacao() { return federacao; }
+    public void setFederacao(String federacao) { this.federacao = federacao; }
+
+    public String getSituacao() { return situacao; }
+    public void setSituacao(String situacao) { this.situacao = situacao; }
+}
