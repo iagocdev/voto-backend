@@ -1,44 +1,161 @@
-# Simulador de Efeito Arrastão( voto indireto) 🗳️
+#  VotoConsciente — Backend
 
-Um sistema Full-Stack desenvolvido para simular e demonstrar o funcionamento do sistema eleitoral proporcional brasileiro (o chamado "Efeito Arrastão"). A aplicação permite consultar candidatos e entender como um voto individual pode ajudar a eleger outros candidatos da mesma federação ou partido.
+> **Descubra quem os seus votos ajudam a eleger.**
+> API REST que simula o Efeito Arrastão do sistema eleitoral proporcional brasileiro.
 
-## 🚀 Tecnologias Utilizadas
+---
 
-**Back-end:** https://github.com/iagocdev/voto-backend
-* Java
-* Spring Boot
-* PostgreSQL
-* Maven
+## Sobre o Projeto
 
-**Front-end:** https://github.com/iagocdev/voto-frontend
-* Angular
-* TypeScript
-* PWA (Progressive Web App) - *Instalável nativamente em Mobile e Desktop*
-* HTML5 / CSS3
+No sistema proporcional brasileiro, votar em um candidato pode eleger outro. Esse fenômeno, conhecido como **Efeito Arrastão**, acontece porque os votos se somam dentro de uma federação ou partido para definir quantas vagas cada grupo conquista — e quem ocupa essas vagas depende da votação individual de cada candidato.
 
-##  Arquitetura e Funcionalidades
+O **VotoConsciente** expõe esse mecanismo de forma clara e acessível: o eleitor informa o número do candidato, o estado e o cargo, e a aplicação retorna todos os outros candidatos da mesma federação que seriam beneficiados por esse voto.
 
-O projeto foi construído com foco em boas práticas de engenharia de software e performance:
+**Repositório frontend:** [iagocdev/voto-frontend](https://github.com/iagocdev/voto-frontend)
 
-* **Consulta Síncrona Rigorosa:** Comunicação fluida entre a interface Angular e a API REST em Spring Boot para cálculo em tempo real do destino dos votos.
-* **Pipeline de Ingestão de Dados (Data Ingestion):** Motor customizado no back-end para processamento em lote (Batch Processing) e sanitização de arquivos `.csv` gigantescos contendo os dados oficiais abertos do TSE, persistindo os registros de forma otimizada no PostgreSQL.
-* **Controle de Renderização Avançado:** Utilização do `ChangeDetectorRef` no Angular para garantir a sincronia exata da interface do usuário com a resolução de requisições assíncronas complexas.
-* **PWA Instalável:** O sistema front-end foi empacotado com Service Workers e um Web Manifest customizado, garantindo uma experiência de aplicativo nativo para o usuário final, com tempos de carregamento reduzidos (caching).
+---
 
-## Como Executar o Projeto Localmente
+##  Stack Tecnológica
+
+| Camada | Tecnologia |
+|---|---|
+| Linguagem | Java 21 |
+| Framework | Spring Boot 4.1 |
+| Persistência | Spring Data JPA + Hibernate |
+| Banco de Dados | PostgreSQL |
+| Build | Maven |
+| API | REST (JSON) |
+
+---
+
+##  Arquitetura
+
+O projeto segue uma estrutura em camadas clara e orientada a responsabilidades:
+
+```
+src/
+└── main/
+    └── java/com/impactosocial/voto/
+        ├── controller/     # Endpoints REST (recebe e responde requisições)
+        ├── service/        # Regras de negócio (lógica do Efeito Arrastão)
+        ├── repository/     # Acesso ao banco de dados via JPA
+        ├── model/          # Entidades JPA (Candidato, etc.)
+        └── dto/            # Objetos de transferência (ResultadoArrastaoDTO)
+```
+
+### Decisões técnicas notáveis
+
+**Pipeline de ingestão de dados (CSV do TSE):** o backend possui um motor de importação em lote capaz de processar e sanitizar os arquivos `.csv` disponibilizados pelo TSE com dados oficiais de candidaturas, persistindo os registros de forma otimizada no PostgreSQL.
+
+**Consulta por federação:** a lógica central do `CandidatoService` identifica a federação do candidato buscado e retorna todos os candidatos elegíveis do mesmo agrupamento eleitoral no mesmo estado, permitindo ao eleitor visualizar o impacto real do seu voto.
+
+---
+
+##  Como Rodar Localmente
 
 ### Pré-requisitos
-* Java 17+
-* Node.js (v18+) e Angular CLI
-* PostgreSQL rodando localmente
 
-### 1. Configurando o Back-end (Spring Boot)
-1. Crie um banco de dados no PostgreSQL (verifique o nome e as credenciais no arquivo `application.properties`).
-2. Abra o projeto na sua IDE Java favorita.
-3. Execute a classe principal da aplicação para levantar o servidor na porta padrão (`8080`).
+- Java 21+
+- Maven 3.9+
+- PostgreSQL 15+ rodando localmente
 
-### 2. Configurando o Front-end (Angular)
-1. Abra o terminal na pasta do front-end.
-2. Instale as dependências:
-   ```bash
-   npm install
+### 1. Clone o repositório
+
+```bash
+git clone https://github.com/iagocdev/voto-backend.git
+cd voto-backend
+```
+
+### 2. Configure o banco de dados
+
+Crie um banco no PostgreSQL:
+
+```sql
+CREATE DATABASE votodb;
+```
+
+Configure as credenciais no `src/main/resources/application.properties`:
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/votodb
+spring.datasource.username=seu_usuario
+spring.datasource.password=sua_senha
+spring.jpa.hibernate.ddl-auto=update
+```
+
+### 3. Execute a aplicação
+
+```bash
+./mvnw spring-boot:run
+```
+
+A API estará disponível em `http://localhost:8080`.
+
+---
+
+##  Endpoints da API
+
+### `GET /api/candidatos/impacto`
+
+Retorna o candidato buscado e todos os outros candidatos da mesma federação que seriam beneficiados pelo voto.
+
+**Parâmetros de query:**
+
+| Parâmetro | Tipo | Exemplo | Descrição |
+|---|---|---|---|
+| `numero` | `int` | `1234` | Número do candidato na urna |
+| `estadoUf` | `string` | `DF` | Unidade federativa (maiúsculo) |
+| `cargo` | `string` | `Deputado Federal` | Cargo disputado |
+
+**Exemplo de requisição:**
+
+```
+GET /api/candidatos/impacto?numero=1234&estadoUf=DF&cargo=Deputado Federal
+```
+
+**Exemplo de resposta (`200 OK`):**
+
+```json
+{
+  "candidatoPrincipal": {
+    "id": 2,
+    "nomeUrna": "Professor João",
+    "numero": 1234,
+    "cargo": "Deputado Federal",
+    "estadoUf": "DF",
+    "partido": "PE",
+    "federacao": "Federação Brasil da Esperança",
+    "situacao": "DEFERIDO"
+  },
+  "beneficiados": [
+    {
+      "id": 3,
+      "nomeUrna": "Professora Maria",
+      "numero": 5678,
+      "cargo": "Deputado Federal",
+      "estadoUf": "DF",
+      "partido": "PT",
+      "federacao": "Federação Brasil da Esperança",
+      "situacao": "DEFERIDO"
+    }
+  ]
+}
+```
+
+**Resposta de erro (`404 Not Found`):** candidato não encontrado com os parâmetros informados.
+
+---
+
+##  CORS
+
+A API está configurada para aceitar requisições do frontend Angular rodando em `http://localhost:4200` durante o desenvolvimento.
+
+---
+
+## 📄 Licença
+
+Projeto de código aberto para fins educacionais e de portfólio.
+
+---
+
+*Desenvolvido por [Iago](https://github.com/iagocdev) — Java & Spring Boot*
