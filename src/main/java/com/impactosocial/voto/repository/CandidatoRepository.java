@@ -10,9 +10,13 @@ import java.util.Optional;
 @Repository
 public interface CandidatoRepository extends JpaRepository<Candidato, Long> {
 
-    // O Spring  monta o SQL
-    Optional<Candidato> findByNumeroAndEstadoUfAndCargo(Integer numero, String estadoUf, String cargo);
+    // Ignora letras maiúsculas e minúsculas no Estado e no Cargo
+    Optional<Candidato> findByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCase(Integer numero, String estadoUf, String cargo);
 
-    //Busca Chapa
-    List<Candidato> findByFederacaoAndEstadoUfAndCargo(String federacao, String estadoUf, String cargo);
+    // Busca beneficiados da mesma federação
+    List<Candidato> findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCase(String federacao, String estadoUf, String cargo);
+
+    // Busca beneficiados do mesmo partido (caso não tenha federação)
+    List<Candidato> findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCase(String partido, String estadoUf, String cargo);
+
 }
