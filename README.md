@@ -152,7 +152,7 @@ A API está configurada para aceitar requisições do frontend Angular rodando e
 
 ---
 
-## 📄 Licença
+##  Licença
 
 Projeto de código aberto para fins educacionais e de portfólio.
 
