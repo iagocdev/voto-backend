@@ -46,15 +46,15 @@ public class CandidatoService {
         List<Candidato> colegas;
 
         // Se o candidato faz parte de uma federação, a busca é pela federação.
-        // Se a federação for "Nenhuma", a busca é apenas pelo partido.
+
         if (!principal.getFederacao().equalsIgnoreCase("Nenhuma")) {
-            colegas = repository.findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCase(
+            colegas = repository.findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(
                     principal.getFederacao(),
                     principal.getEstadoUf(),
                     principal.getCargo()
             );
         } else {
-            colegas = repository.findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCase(
+            colegas = repository.findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(
                     principal.getPartido(),
                     principal.getEstadoUf(),
                     principal.getCargo()

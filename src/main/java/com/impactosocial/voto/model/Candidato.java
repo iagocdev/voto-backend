@@ -22,6 +22,7 @@ public class Candidato {
     private String partido;
     private String federacao;
     private String situacao;
+    private Boolean eleito;
 
     // Construtor Vazio (Obrigatório para o Spring/Hibernate)
     public Candidato() {
@@ -63,4 +64,8 @@ public class Candidato {
 
     public String getSituacao() { return situacao; }
     public void setSituacao(String situacao) { this.situacao = situacao; }
+
+    public Boolean getEleito() {return eleito;}
+
+    public void setEleito(Boolean eleito) {this.eleito = eleito;}
 }

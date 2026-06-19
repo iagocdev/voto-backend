@@ -10,13 +10,11 @@ import java.util.Optional;
 @Repository
 public interface CandidatoRepository extends JpaRepository<Candidato, Long> {
 
-    // Ignora letras maiúsculas e minúsculas no Estado e no Cargo
+    // O candidato principal não precisa do EleitoTrue (pois podemos pesquisar alguém que perdeu)
     Optional<Candidato> findByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCase(Integer numero, String estadoUf, String cargo);
 
-    // Busca beneficiados da mesma federação
-    List<Candidato> findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCase(String federacao, String estadoUf, String cargo);
+    // Os colegas beneficiados AGORA TÊM QUE SER ELEITOS
+    List<Candidato> findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(String federacao, String estadoUf, String cargo);
 
-    // Busca beneficiados do mesmo partido (caso não tenha federação)
-    List<Candidato> findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCase(String partido, String estadoUf, String cargo);
-
+    List<Candidato> findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(String partido, String estadoUf, String cargo);
 }
