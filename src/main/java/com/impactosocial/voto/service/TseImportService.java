@@ -32,7 +32,7 @@ public class TseImportService {
         Map<String, Integer> colunas = new HashMap<>();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                new ClassPathResource("candidatos_brutosDF.csv").getInputStream(), StandardCharsets.ISO_8859_1))) {
+                new ClassPathResource("candidatos_brutosSP.csv").getInputStream(), StandardCharsets.ISO_8859_1))) {
 
             String linha;
             boolean primeiraLinha = true;
