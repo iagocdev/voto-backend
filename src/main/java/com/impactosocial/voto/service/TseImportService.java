@@ -3,9 +3,9 @@ package com.impactosocial.voto.service;
 import com.impactosocial.voto.model.Candidato;
 import com.impactosocial.voto.repository.CandidatoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -22,7 +22,7 @@ public class TseImportService {
     private CandidatoRepository candidatoRepository;
 
     @Transactional
-    public String importarDadosCsv() {
+    public String importarDadosCsv(MultipartFile arquivoTse) {
         // Limpa a tabela antes da nova carga
         candidatoRepository.deleteAll();
 
@@ -32,7 +32,7 @@ public class TseImportService {
         Map<String, Integer> colunas = new HashMap<>();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                new ClassPathResource("candidatos_brutosSP.csv").getInputStream(), StandardCharsets.ISO_8859_1))) {
+                arquivoTse.getInputStream(), StandardCharsets.ISO_8859_1))) {
 
             String linha;
             boolean primeiraLinha = true;
@@ -82,8 +82,8 @@ public class TseImportService {
                         }
 
                         if (colunas.containsKey("DS_SITUACAO_CANDIDATURA")) {
-                            String situacao = dados[colunas.get("DS_SITUACAO_CANDIDATURA")].trim().toUpperCase();
-                            candidato.setSituacao(situacao.equals("APTO") ? "Deferido" : "Indeferido");
+                            String ProxySituacao = dados[colunas.get("DS_SITUACAO_CANDIDATURA")].trim().toUpperCase();
+                            candidato.setSituacao(ProxySituacao.equals("APTO") ? "Deferido" : "Indeferido");
                         }
 
                         // A GLÓRIA: Resultado real da urna
@@ -105,7 +105,7 @@ public class TseImportService {
 
             candidatoRepository.saveAll(candidatosParaSalvar);
 
-            return "Carga massiva INTELIGENTE concluída! " + candidatosParaSalvar.size() + " candidatos reais importados com sucesso.";
+            return "Carga massiva INTELIGENTE concluída! " + candidatosParaSalvar.size() + " candidatos reais importados com sucesso a partir do arquivo enviado.";
 
         } catch (Exception e) {
             e.printStackTrace();
