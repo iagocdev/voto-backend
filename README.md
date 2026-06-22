@@ -97,7 +97,7 @@ A API estará disponível em `http://localhost:8080`.
 
 ### `GET /api/candidatos/impacto`
 
-Retorna o candidato buscado e todos os outros candidatos da mesma federação que seriam beneficiados pelo voto.
+Retorna o candidato buscado e os candidatos da mesma federação que foram eleitos sendo beneficiados pelo voto.
 
 **Parâmetros de query:**
 
@@ -152,7 +152,7 @@ A API está configurada para aceitar requisições do frontend Angular rodando e
 
 ---
 
-## 📄 Licença
+##  Licença
 
 Projeto de código aberto para fins educacionais e de portfólio.
 
