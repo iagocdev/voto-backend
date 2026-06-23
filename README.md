@@ -135,6 +135,16 @@ spring.jpa.hibernate.ddl-auto=update
 A API estará disponível em `http://localhost:8080`.
 
 ---
+Executando a Importação em Lote da Base Nacional
+
+Para processar simultaneamente todos os arquivos de estados extraídos do TSE, navegue até a pasta dos arquivos .csv no terminal do Linux e execute o script automatizado:
+Bash
+
+for file in *.csv; do
+    echo "Importando: $file"
+    curl -X POST http://localhost:8080/api/candidatos/importar-tse -F "file=@$file"
+    echo -e "\n----------------------------------------\n"
+done
 
 ##  Endpoints da API
 
@@ -147,12 +157,14 @@ Retorna o candidato buscado e os candidatos da mesma federação que foram eleit
 Endpoints da API
 GET /api/candidatos/impacto
 
-Retorna o candidato buscado e os candidatos da mesma federação que foram eleitos sendo beneficiados pelo voto.
+Retorna o candidato buscado e os candidatos da mesma federação/partido que foram eleitos, demonstrando quem se beneficia com o voto proporcional.
 
+Parâmetros de query:
 Parâmetro	Tipo	Exemplo	Descrição
 numero	int	2222	Número do candidato na urna
 estadoUf	string	SP	Unidade federativa (maiúsculo)
 cargo	string	Deputado Federal	Cargo disputado
+
 **Exemplo de requisição:**
 
 ```
