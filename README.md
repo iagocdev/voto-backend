@@ -149,12 +149,10 @@ GET /api/candidatos/impacto
 
 Retorna o candidato buscado e os candidatos da mesma federação que foram eleitos sendo beneficiados pelo voto.
 
-Parâmetros de query:
-Parâmetro |	Tipo |	Exemplo |	Descrição
-numero    | int	 |     1234 |	Número do candidato na urna
-estadoUf  |string|	  DF    | Unidade federativa (maiúsculo)
-cargo	  |string|Deputado Federal |	Cargo disputado
-
+Parâmetro	Tipo	Exemplo	Descrição
+numero	int	2222	Número do candidato na urna
+estadoUf	string	SP	Unidade federativa (maiúsculo)
+cargo	string	Deputado Federal	Cargo disputado
 **Exemplo de requisição:**
 
 ```
