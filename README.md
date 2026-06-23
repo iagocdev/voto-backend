@@ -49,7 +49,50 @@ src/
 
 **Consulta por federação:** a lógica central do `CandidatoService` identifica a federação do candidato buscado e retorna todos os candidatos elegíveis do mesmo agrupamento eleitoral no mesmo estado, permitindo ao eleitor visualizar o impacto real do seu voto.
 
----
+---Pipeline de Tratamento e Sanitização de Dados (ETL)
+
+O motor de ingestão em lote localizado no TseImportService atua como um pipeline de ETL (Extract, Transform, Load) robusto, projetado para processar arquivos .csv massivos e potencialmente "sujos" do TSE, garantindo a integridade de quase 30.000 registros consolidados.
+
+A esteira de processamento realiza as seguintes transformações:
+1. Ingestão e Fatiamento Dinâmico
+
+O arquivo é lido via BufferedReader com codificação ISO_8859_1. As aspas duplas são removidas e a linha é fatiada utilizando o separador ponto e vírgula:
+Java
+
+linha = linha.replace("\"", "");
+String[] dados = linha.split(";", -1);
+
+O argumento -1 no método split garante que colunas vazias consecutivas não alterem a estrutura do array.
+2. Mapeamento Inteligente de Cabeçalhos
+
+Para evitar acoplamento rígido com a ordem das colunas do arquivo do TSE, a primeira linha constrói um dicionário em memória com a posição indexada de cada atributo, expurgando caracteres invisíveis de formatação (como o BOM do Excel):
+Java
+
+String nomeColuna = dados[i].replace("\uFEFF", "").trim().toUpperCase();
+colunas.put(nomeColuna, i);
+
+3. Sanitização e Enriquecimento de Dados
+
+Antes da persistência, os dados brutos passam por regras de negócio estéticas e lógicas:
+
+    Padronização de Siglas: Remoção de espaços e conversão forçada para maiúsculas em campos como SG_UF.
+
+    Tratamento de Valores Nulos: O padrão #NULO enviado pelo TSE no campo de federações é traduzido para "Nenhuma".
+
+    Formatação Estética (Capitalize): Cargos em caixa alta (ex: DEPUTADO FEDERAL) são convertidos para o padrão de leitura convencional (Deputado federal).
+
+    Tradução Lógica: Situações de candidatura como APTO são normalizadas para Deferido ou Indeferido.
+
+    Otimização de Booleanos: O resultado final da urna (DS_SIT_TOT_TURNO) é mapeado diretamente para um campo booleano eleito (true/false), reduzindo drasticamente o tamanho de armazenamento e acelerando as consultas indexadas.
+
+4. Dupla Camada de Proteção contra Duplicados
+
+Para suportar cargas massivas sem quebrar a transação ativa ou gerar registros repetidos, o sistema aplica uma barreira dupla:
+
+    Filtro em Memória (HashSet): Cria uma chave única combinando Numero-UF-Cargo para cada linha. Se a chave já existir no arquivo atual, a linha é descartada antes de onerar o banco de dados.
+
+    Filtro de Persistência (existsBy): Consulta o repositório para validar se o candidato já foi inserido em importações anteriores. Uma restrição rígida de unicidade (UniqueConstraint) também está ativa a nível de base de dados na entidade
+
 
 ##  Como Rodar Localmente
 
@@ -120,28 +163,29 @@ GET /api/candidatos/impacto?numero=1234&estadoUf=DF&cargo=Deputado%20Federal
 
 **Exemplo de resposta (`200 OK`):**
 
-```json
-{
+```{
   "candidatoPrincipal": {
-    "id": 2,
-    "nomeUrna": "Professor João",
-    "numero": 1234,
-    "cargo": "Deputado Federal",
-    "estadoUf": "DF",
-    "partido": "PE",
-    "federacao": "Federação Brasil da Esperança",
-    "situacao": "DEFERIDO"
+    "id": 85787,
+    "nomeUrna": "EDUARDO BOLSONARO",
+    "numero": 2222,
+    "cargo": "Deputado federal",
+    "estadoUf": "SP",
+    "partido": "PL",
+    "federacao": "Nenhuma",
+    "situacao": "Deferido",
+    "eleito": true
   },
   "beneficiados": [
     {
-      "id": 3,
-      "nomeUrna": "Professora Maria",
-      "numero": 5678,
-      "cargo": "Deputado Federal",
-      "estadoUf": "DF",
-      "partido": "PT",
-      "federacao": "Federação Brasil da Esperança",
-      "situacao": "DEFERIDO"
+      "id": 71229,
+      "nomeUrna": "PASTOR MARCO FELICIANO",
+      "numero": 2270,
+      "cargo": "Deputado federal",
+      "estadoUf": "SP",
+      "partido": "PL",
+      "federacao": "Nenhuma",
+      "situacao": "Deferido",
+      "eleito": true
     }
   ]
 }
