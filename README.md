@@ -7,7 +7,7 @@
 
 API REST que simula o **Efeito Arrastão** do sistema eleitoral proporcional brasileiro.
 
-## 📖 Sobre o Projeto
+##  Sobre o Projeto
 No sistema proporcional brasileiro, votar em um candidato pode eleger outro. Esse fenômeno, conhecido como Efeito Arrastão, acontece porque os votos se somam dentro de uma federação ou partido para definir quantas vagas cada grupo conquista — e quem ocupa essas vagas depende da votação individual de cada candidato.
 
 O **VotoConsciente** expõe esse mecanismo de forma clara e acessível: o eleitor informa o número do candidato, o estado e o cargo, e a aplicação retorna todos os outros candidatos da mesma federação que seriam beneficiados por esse voto.
