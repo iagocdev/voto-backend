@@ -1,38 +1,38 @@
-#  VotoConsciente — Backend
+# VotoConsciente — Backend
+**Descubra quem os seus votos ajudam a eleger.**
 
-> **Descubra quem os seus votos ajudam a eleger.**
-> API REST que simula o Efeito Arrastão do sistema eleitoral proporcional brasileiro.
+[![Java 21](https://img.shields.io/badge/Java-21-blue.svg)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1+-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
 
----
+API REST que simula o **Efeito Arrastão** do sistema eleitoral proporcional brasileiro.
 
-## Sobre o Projeto
-
-No sistema proporcional brasileiro, votar em um candidato pode eleger outro. Esse fenômeno, conhecido como **Efeito Arrastão**, acontece porque os votos se somam dentro de uma federação ou partido para definir quantas vagas cada grupo conquista — e quem ocupa essas vagas depende da votação individual de cada candidato.
+## 📖 Sobre o Projeto
+No sistema proporcional brasileiro, votar em um candidato pode eleger outro. Esse fenômeno, conhecido como Efeito Arrastão, acontece porque os votos se somam dentro de uma federação ou partido para definir quantas vagas cada grupo conquista — e quem ocupa essas vagas depende da votação individual de cada candidato.
 
 O **VotoConsciente** expõe esse mecanismo de forma clara e acessível: o eleitor informa o número do candidato, o estado e o cargo, e a aplicação retorna todos os outros candidatos da mesma federação que seriam beneficiados por esse voto.
 
-**Repositório frontend:** [iagocdev/voto-frontend](https://github.com/iagocdev/voto-frontend)
+ **Repositório Frontend:** [iagocdev/voto-frontend](https://github.com/iagocdev/voto-frontend)
 
 ---
 
 ##  Stack Tecnológica
 
-| Camada | Tecnologia |
-|---|---|
-| Linguagem | Java 21 |
-| Framework | Spring Boot 4.1 |
-| Persistência | Spring Data JPA + Hibernate |
-| Banco de Dados | PostgreSQL |
-| Build | Maven |
-| API | REST (JSON) |
+| Camada | Tecnologia / Linguagem |
+| :--- | :--- |
+| **Linguagem** | Java 21 |
+| **Framework** | Spring Boot |
+| **Persistência** | Spring Data JPA + Hibernate |
+| **Banco de Dados** | PostgreSQL |
+| **Build** | Maven |
+| **API** | REST (JSON) |
 
 ---
 
 ##  Arquitetura
-
 O projeto segue uma estrutura em camadas clara e orientada a responsabilidades:
 
-```
+```text
 src/
 └── main/
     └── java/com/impactosocial/voto/
@@ -101,16 +101,21 @@ Retorna o candidato buscado e os candidatos da mesma federação que foram eleit
 
 **Parâmetros de query:**
 
-| Parâmetro | Tipo | Exemplo | Descrição |
-|---|---|---|---|
-| `numero` | `int` | `1234` | Número do candidato na urna |
-| `estadoUf` | `string` | `DF` | Unidade federativa (maiúsculo) |
-| `cargo` | `string` | `Deputado Federal` | Cargo disputado |
+Endpoints da API
+GET /api/candidatos/impacto
+
+Retorna o candidato buscado e os candidatos da mesma federação que foram eleitos sendo beneficiados pelo voto.
+
+Parâmetros de query:
+Parâmetro |	Tipo |	Exemplo |	Descrição
+numero    | int	 |     1234 |	Número do candidato na urna
+estadoUf  |string|	  DF    | Unidade federativa (maiúsculo)
+cargo	  |string|Deputado Federal |	Cargo disputado
 
 **Exemplo de requisição:**
 
 ```
-GET /api/candidatos/impacto?numero=1234&estadoUf=DF&cargo=Deputado Federal
+GET /api/candidatos/impacto?numero=1234&estadoUf=DF&cargo=Deputado%20Federal
 ```
 
 **Exemplo de resposta (`200 OK`):**
