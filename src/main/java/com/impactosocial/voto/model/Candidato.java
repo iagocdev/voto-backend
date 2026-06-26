@@ -1,11 +1,11 @@
 package com.impactosocial.voto.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name ="candidato", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"numero","estado_uf","cargo" ,"ano_eleicao"})
+} )
 public class Candidato {
 
     @Id
@@ -17,6 +17,9 @@ public class Candidato {
     private Integer numero;
     private String cargo;
     private String estadoUf;
+
+    @Column(name = "ano_eleicao")
+    private Integer anoEleicao;
 
     // Regras Eleitorais
     private String partido;
@@ -34,6 +37,7 @@ public class Candidato {
         this.numero = numero;
         this.cargo = cargo;
         this.estadoUf = estadoUf;
+        this.anoEleicao = anoEleicao;
         this.partido = partido;
         this.federacao = federacao;
         this.situacao = situacao;
@@ -55,6 +59,9 @@ public class Candidato {
 
     public String getEstadoUf() { return estadoUf; }
     public void setEstadoUf(String estadoUf) { this.estadoUf = estadoUf; }
+
+    public Integer getAnoEleicao() { return anoEleicao; }
+    public void setAnoEleicao(Integer anoEleicao) { this.anoEleicao = anoEleicao; }
 
     public String getPartido() { return partido; }
     public void setPartido(String partido) { this.partido = partido; }
