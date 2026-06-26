@@ -7,13 +7,13 @@ import com.impactosocial.voto.service.TseImportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/candidatos")
 public class CandidatoController {
 
-    // A injeção do serviço de importação
     @Autowired
     private TseImportService tseImportService;
 
@@ -32,22 +32,34 @@ public class CandidatoController {
     public Candidato buscarCandidato(
             @RequestParam Integer numero,
             @RequestParam String estadoUf,
-            @RequestParam String cargo ) {
-        return candidatoService.buscarCandidatoEspecifico(numero, estadoUf, cargo);
+            @RequestParam String cargo,
+            // Adicionado o parâmetro com valor padrão 2022
+            @RequestParam(defaultValue = "2022") Integer anoEleicao ) {
+        return candidatoService.buscarCandidatoEspecifico(numero, estadoUf, cargo, anoEleicao);
     }
 
     @GetMapping("/impacto")
     public ResultadoArrastaoDTO simularArrastao(
             @RequestParam Integer numero,
             @RequestParam String estadoUf,
-            @RequestParam String cargo){
-        return candidatoService.calcularImpacto(numero, estadoUf, cargo);
+            @RequestParam String cargo,
+            //  valor padrão 2022
+            @RequestParam(defaultValue = "2022") Integer anoEleicao){
+        return candidatoService.calcularImpacto(numero, estadoUf, cargo, anoEleicao);
     }
 
+    // A MÁGICA ACONTECE AQUI: Recebendo o arquivo do Postman/Front-end
     @PostMapping("/importar-tse")
-    public ResponseEntity<String> importarDadosTse() {
-        String resultado = tseImportService.importarDadosCsv();
-        return ResponseEntity.ok(resultado);
-    }
+    public ResponseEntity<String> importarDadosTse(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("Erro: O arquivo enviado está vazio.");
+        }
 
+        try {
+            String resultado = tseImportService.importarDadosCsv(file);
+            return ResponseEntity.ok(resultado);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Erro ao processar o arquivo: " + e.getMessage());
+        }
+    }
 }
