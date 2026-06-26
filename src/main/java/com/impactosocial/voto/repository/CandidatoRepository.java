@@ -10,11 +10,33 @@ import java.util.Optional;
 @Repository
 public interface CandidatoRepository extends JpaRepository<Candidato, Long> {
 
-    // O candidato principal não precisa do EleitoTrue (pois podemos pesquisar alguém que perdeu)
-    Optional<Candidato> findByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCase(Integer numero, String estadoUf, String cargo);
+    boolean existsByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndAnoEleicao(
+            Integer numero, String estadoUf, String cargo, Integer anoEleicao
+    );
 
-    // Os colegas beneficiados AGORA TÊM QUE SER ELEITOS
-    List<Candidato> findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(String federacao, String estadoUf, String cargo);
+    Optional<Candidato> findFirstByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndAnoEleicao(
+            Integer numero, String estadoUf, String cargo, Integer anoEleicao
+    );
 
-    List<Candidato> findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(String partido, String estadoUf, String cargo);
+    // ==========================================
+    //  MÉTODOS DE HISTÓRICO (2022 para trás)
+    // ==========================================
+    List<Candidato> findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrueAndAnoEleicao(
+            String federacao, String estadoUf, String cargo, Integer anoEleicao
+    );
+
+    List<Candidato> findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrueAndAnoEleicao(
+            String partido, String estadoUf, String cargo, Integer anoEleicao
+    );
+
+    // ==========================================
+    //  MÉTODOS DE PROJEÇÃO (2026 para frente)
+    // ==========================================
+    List<Candidato> findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndAnoEleicao(
+            String federacao, String estadoUf, String cargo, Integer anoEleicao
+    );
+
+    List<Candidato> findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndAnoEleicao(
+            String partido, String estadoUf, String cargo, Integer anoEleicao
+    );
 }

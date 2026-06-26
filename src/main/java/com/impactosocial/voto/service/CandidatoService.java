@@ -14,54 +14,82 @@ public class CandidatoService {
 
     private final CandidatoRepository repository;
 
-    // Injetando o repositório
+    // Injetando o repositório via construtor
     public CandidatoService(CandidatoRepository repository) {
         this.repository = repository;
     }
 
-    public Candidato buscarCandidatoEspecifico(Integer numero, String estadoUf, String cargo) {
+    // O anoEleicao é parâmetro obrigatório para garantir o isolamento temporal
+    public Candidato buscarCandidatoEspecifico(Integer numero, String estadoUf, String cargo, Integer anoEleicao) {
         // TRATAMENTO INTELIGENTE: Corrige "Estadual" para "Distrital" no DF
-        // E usamos equalsIgnoreCase para não dar erro se o Angular mandar "df" ou "DF"
         if (estadoUf.equalsIgnoreCase("DF") && cargo.equalsIgnoreCase("Deputado Estadual")) {
             cargo = "Deputado Distrital";
         }
 
-        // Agora busca no banco ignorando letras maiúsculas e minúsculas (IgnoreCase)
         String finalCargo = cargo;
-        return repository.findByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCase(numero, estadoUf, cargo)
+        // Chamando o método do repositório indexado por ano
+        return repository.findFirstByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndAnoEleicao(numero, estadoUf, cargo, anoEleicao)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Candidato não encontrado com o número " + numero +
-                                " para o cargo de " + finalCargo + " em " + estadoUf));
+                                " para o cargo de " + finalCargo + " em " + estadoUf + " no ano de " + anoEleicao));
     }
 
     public Candidato salvarCandidato(Candidato candidato){
         return repository.save(candidato);
     }
 
-    public ResultadoArrastaoDTO calcularImpacto(Integer numero, String estadoUf, String cargo) {
-        // Busca o candidato (A correção de DF/Distrital já acontece automaticamente lá dentro!)
-        Candidato principal = buscarCandidatoEspecifico(numero, estadoUf, cargo);
+    // Calcula o impacto aplicando o desvio de comportamento com base no ano eleitoral
+    public ResultadoArrastaoDTO calcularImpacto(Integer numero, String estadoUf, String cargo, Integer anoEleicao) {
+        // Busca o candidato de referência para o ano solicitado
+        Candidato principal = buscarCandidatoEspecifico(numero, estadoUf, cargo, anoEleicao);
 
         List<Candidato> colegas;
 
-        // Se o candidato faz parte de uma federação, a busca é pela federação.
+        // BIFURCAÇÃO DA REGRA DE NEGÓCIO:
+        // Anos a partir de 2026 são considerados "Projeção" (retorna toda a legenda ativa).
+        // Anos anteriores (como 2022) são considerados "Histórico" (retorna estritamente quem obteve êxito nas urnas).
+        boolean isProjecao = anoEleicao >= 2026;
 
         if (!principal.getFederacao().equalsIgnoreCase("Nenhuma")) {
-            colegas = repository.findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(
-                    principal.getFederacao(),
-                    principal.getEstadoUf(),
-                    principal.getCargo()
-            );
+            if (isProjecao) {
+                // 2026: Puxa todos os membros da federação que dividem a mesma legenda e podem se beneficiar
+                colegas = repository.findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndAnoEleicao(
+                        principal.getFederacao(),
+                        principal.getEstadoUf(),
+                        principal.getCargo(),
+                        principal.getAnoEleicao()
+                );
+            } else {
+                // 2022: Filtra exclusivamente os companheiros de federação que terminaram eleitos
+                colegas = repository.findByFederacaoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrueAndAnoEleicao(
+                        principal.getFederacao(),
+                        principal.getEstadoUf(),
+                        principal.getCargo(),
+                        principal.getAnoEleicao()
+                );
+            }
         } else {
-            colegas = repository.findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrue(
-                    principal.getPartido(),
-                    principal.getEstadoUf(),
-                    principal.getCargo()
-            );
+            if (isProjecao) {
+                // 2026: Puxa todos os membros do partido isolado para mapeamento de potencial de votos
+                colegas = repository.findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndAnoEleicao(
+                        principal.getPartido(),
+                        principal.getEstadoUf(),
+                        principal.getCargo(),
+                        principal.getAnoEleicao()
+                );
+            } else {
+                // 2022: Filtra exclusivamente os companheiros de partido isolado que terminaram eleitos
+                colegas = repository.findByPartidoAndEstadoUfIgnoreCaseAndCargoIgnoreCaseAndEleitoTrueAndAnoEleicao(
+                        principal.getPartido(),
+                        principal.getEstadoUf(),
+                        principal.getCargo(),
+                        principal.getAnoEleicao()
+                );
+            }
         }
 
-        // Remove o próprio candidato da lista de beneficiados
+        // Remove o candidato principal da lista para exibir apenas os terceiros impactados
         colegas.removeIf(c -> c.getId().equals(principal.getId()));
 
         return new ResultadoArrastaoDTO(principal, colegas);
