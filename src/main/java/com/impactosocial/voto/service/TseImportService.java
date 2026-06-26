@@ -12,8 +12,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class TseImportService {
@@ -23,13 +25,13 @@ public class TseImportService {
 
     @Transactional
     public String importarDadosCsv(MultipartFile arquivoTse) {
-        // Limpa a tabela antes da nova carga
-        candidatoRepository.deleteAll();
-
         List<Candidato> candidatosParaSalvar = new ArrayList<>();
 
         // Este mapa vai guardar o nome da coluna e a posição exata dela no arquivo
         Map<String, Integer> colunas = new HashMap<>();
+
+        // Este Set impede a duplicação de candidatos DENTRO do mesmo arquivo CSV
+        Set<String> chavesNoArquivo = new HashSet<>();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 arquivoTse.getInputStream(), StandardCharsets.ISO_8859_1))) {
@@ -41,10 +43,9 @@ public class TseImportService {
                 linha = linha.replace("\"", "");
                 String[] dados = linha.split(";", -1);
 
-                // O MAPEDADOR INTELIGENTE
+                // O MAPEADOR INTELIGENTE
                 if (primeiraLinha) {
                     for (int i = 0; i < dados.length; i++) {
-                        // Limpa o nome da coluna (remove espaços e caracteres invisíveis como o BOM do Excel)
                         String nomeColuna = dados[i].replace("\uFEFF", "").trim().toUpperCase();
                         colunas.put(nomeColuna, i);
                     }
@@ -57,7 +58,7 @@ public class TseImportService {
                     try {
                         Candidato candidato = new Candidato();
 
-                        // Lê os dados usando o NOME da coluna, não importa em qual posição ela esteja
+                        // Lê os dados usando o NOME da coluna
                         candidato.setNumero(Integer.parseInt(dados[colunas.get("NR_CANDIDATO")].trim()));
                         candidato.setNomeUrna(dados[colunas.get("NM_URNA_CANDIDATO")].trim());
                         candidato.setEstadoUf(dados[colunas.get("SG_UF")].trim().toUpperCase());
@@ -70,23 +71,23 @@ public class TseImportService {
                             String federacao = dados[colunas.get("NM_FEDERACAO")].trim();
                             candidato.setFederacao(federacao.equals("#NULO") ? "Nenhuma" : federacao);
                         } else {
-                            candidato.setFederacao("Nenhuma"); // Segurança caso a coluna não exista
+                            candidato.setFederacao("Nenhuma");
                         }
 
                         if (colunas.containsKey("DS_CARGO")) {
                             String cargoBruto = dados[colunas.get("DS_CARGO")].trim().toLowerCase();
                             if (!cargoBruto.isEmpty()) {
                                 String cargoFormatado = cargoBruto.substring(0, 1).toUpperCase() + cargoBruto.substring(1);
+
                                 candidato.setCargo(cargoFormatado);
                             }
                         }
 
                         if (colunas.containsKey("DS_SITUACAO_CANDIDATURA")) {
-                            String ProxySituacao = dados[colunas.get("DS_SITUACAO_CANDIDATURA")].trim().toUpperCase();
-                            candidato.setSituacao(ProxySituacao.equals("APTO") ? "Deferido" : "Indeferido");
+                            String proxySituacao = dados[colunas.get("DS_SITUACAO_CANDIDATURA")].trim().toUpperCase();
+                            candidato.setSituacao(proxySituacao.equals("APTO") ? "Deferido" : "Indeferido");
                         }
 
-                        // A GLÓRIA: Resultado real da urna
                         if (colunas.containsKey("DS_SIT_TOT_TURNO")) {
                             String situacaoTurno = dados[colunas.get("DS_SIT_TOT_TURNO")].trim().toUpperCase();
                             candidato.setEleito(situacaoTurno.startsWith("ELEITO"));
@@ -94,18 +95,45 @@ public class TseImportService {
                             candidato.setEleito(false);
                         }
 
-                        candidatosParaSalvar.add(candidato);
+                        // === AQUI ENTRA A DUPLA PROTEÇÃO BLINDADA ===
+
+                        // 1. Gera uma chave identificadora única para a linha atual
+                        String chaveUnica = candidato.getNumero() + "-" + candidato.getEstadoUf() + "-" + candidato.getCargo().toUpperCase();
+
+                        // 2. Se essa chave já foi vista neste arquivo, pula imediatamente
+                        if (chavesNoArquivo.contains(chaveUnica)) {
+                            System.out.println("⚠️ Ignorando duplicata interna do arquivo: " + chaveUnica);
+                            continue;
+                        }
+
+                        // 3. Se não for duplicado no arquivo, checa se já existe salvo no Banco de Dados
+                        boolean candidatoJaExisteNoBanco = candidatoRepository.existsByNumeroAndEstadoUfIgnoreCaseAndCargoIgnoreCase(
+                                candidato.getNumero(),
+                                candidato.getEstadoUf(),
+                                candidato.getCargo()
+                        );
+
+                        if (!candidatoJaExisteNoBanco) {
+                            // Adiciona ao controle de memória e inclui na lista de salvamento
+                            chavesNoArquivo.add(chaveUnica);
+                            candidatosParaSalvar.add(candidato);
+                        } else {
+                            System.out.println("🚫 Candidato já existente no banco de dados: " + chaveUnica);
+                        }
 
                     } catch (Exception ex) {
-                        // Se uma linha isolada estiver corrompida, ele pula e continua salvando o resto
+                        // Se uma linha isolada estiver corrompida, pula e vai para a próxima
                         continue;
                     }
                 }
             }
 
-            candidatoRepository.saveAll(candidatosParaSalvar);
+            // Salva apenas os registros que sobreviveram aos dois filtros
+            if (!candidatosParaSalvar.isEmpty()) {
+                candidatoRepository.saveAll(candidatosParaSalvar);
+            }
 
-            return "Carga massiva INTELIGENTE concluída! " + candidatosParaSalvar.size() + " candidatos reais importados com sucesso a partir do arquivo enviado.";
+            return "Carga massiva INTELIGENTE concluída! " + candidatosParaSalvar.size() + " novos candidatos reais importados com sucesso.";
 
         } catch (Exception e) {
             e.printStackTrace();
